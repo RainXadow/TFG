@@ -1,8 +1,3 @@
-<html>
-    <head>
+{% extends 'base.html' %}
 
-    </head>
-    <body>
-        <h1>HOLA VISITA MI BLOG <a href="{% url 'blog:home' %}">AQUI</a></h1>
-    </body>
-</html>
+{% block content %}HOLA VISITA MI BLOG <a href="{% url 'blog:home' %}">AQUI</a>{% endblock content %}
