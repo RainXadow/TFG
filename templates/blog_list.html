@@ -1,0 +1,9 @@
+BLOG LIST
+<br/>
+{%for post in posts%}
+<a href="{% url 'blog:detail' post.id %}">{{post.title}}</a>
+<a href="{% url 'blog:update' post.id %}">Editar</a>
+<a href="{% url 'blog:delete' post.id %}">Eliminar</a> <br/>
+{% endfor %}
+<br/>
+<a href="{% url 'blog:create' %}">Create</a>
