@@ -1,9 +1,28 @@
-BLOG LIST
-<br/>
-{%for post in posts%}
-<a href="{% url 'blog:detail' post.id %}">{{post.title}}</a>
-<a href="{% url 'blog:update' post.id %}">Editar</a>
-<a href="{% url 'blog:delete' post.id %}">Eliminar</a> <br/>
-{% endfor %}
-<br/>
-<a href="{% url 'blog:create' %}">Create</a>
+{% extends 'base.html' %}
+
+{% block content %}
+<html lang="en" class="bg-dark dark:bg-slate-900 px-6 py-8">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body class="text-white">
+    <h1 class="text-5xl font-bold text-white dark:text-gray-200">BLOG LIST</h1>
+    <br/>
+    {%for post in posts%}
+        <div class="bg-dark dark:bg-slate-800 border-white rounded-lg px-6 py-8 ring-white-2 ring-slate-900/3 shadow-xl">
+            <h2 class="text-5xl font-bold text-white py-2 dark:text-gray-400"><a class="text-slate-500 dark:text-slate-400 px-2 py-6 mt-2 text-sm" href="{% url 'blog:detail' post.id %}">{{post.title}}</a></h2>
+            <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" href="{% url 'blog:update' post.id %}">Editar</a>
+            <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" href="{% url 'blog:delete' post.id %}">Eliminar</a> <br/>
+        </div>
+        <br/>
+        <br/>
+    {% endfor %}
+    <br/>
+    
+    <a  class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full" href="{% url 'blog:create' %}">Crear</a>
+</body>
+</html>
+{% endblock content %}
