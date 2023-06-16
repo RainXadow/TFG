@@ -1,17 +1,75 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block content %}
-<html class="bg-white dark:bg-slate-800 px-6 py-8 ring-1 ring-slate-900/5 shadow-xl" lang="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css" rel="stylesheet">
+    <title>Blog</title>
 </head>
-<body class="text-white">
-        BLOG DETAILS<br/><br/>
-        {{post.id}}:{{post.title}}
-        <br/><br/>
-        {{post.content}}
+<body class="bg-gray-900 text-white">
+    <a href="{% url 'blog:home' %}" class="py-4 px-4 flex items-center hover:text-gray-500 transition ease-in-out duration-150">
+        <i class="fas fa-arrow-left text-4xl mr-2"></i>
+    </a>
+    <div class="max-w-4xl mx-auto px-6 py-5">
+        <div class="mb-8 py-3">
+            <h1 class="text-5xl font-bold mb-4">{{post.title}}</h1>
+            <div class="mb-4 text-gray-400 py-1">
+                <span>Publicado el {{post.created_at|date:"F d, Y"}} por {{ post.author }}</span>
+            </div>
+            {% if post.image %}
+                <div>
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" style="width: 100%; height: 500px; object-fit: cover; object-position: center;">
+                </div>            
+            {% endif %}
+            <div class="text-base text-2xl leading-relaxed py-6">
+                {{post.content|safe}}
+            </div>
+            <div class="mb-4">
+                <span class="text-3xl font-bold text-yellow-300">{{post.evaluation}}/5({{post.user_participation}})</span>
+            </div>
+            <div class="mb-4">
+                <span class="text-xl font-bold">Precio: </span><span class="text-xl font-bold">{{post.price}}</span>
+            </div>
+            <p class="text-sm text-2xl mb-4">Dónde encontrar: {{post.where_to_find}}</p>
+        </div>
+
+        <!-- Campos de comentarios -->
+        <div class="mb-4">
+            <h2 class="text-xl font-bold mb-2">Comentarios:</h2>
+            {% for comment in comments %}
+                <div class="border-b border-gray-600 py-2">
+                    <p class="text-sm font-bold mb-1">{{comment.author}}</p>
+                    <p class="text-sm">{{comment.comment_text}}</p>
+                </div>
+            {% endfor %}
+            <!-- Formulario de comentarios -->
+            <form action="{% url 'blog:add_comment' post.pk %}" method="post" class="mt-4">
+                {% csrf_token %}
+                <input type="text" name="comment_text" id= "comment_text" placeholder="Escribe un comentario..." class="w-full p-2 border rounded bg-white text-black">
+                <button type="submit" class="mt-2 px-4 py-2 rounded bg-green-500 text-white">Publicar</button>
+            </form>
+        </div>
+
+        <!-- Formulario de evaluaciones -->
+        <div class="mb-4">
+            <h2 class="text-xl font-bold mb-2">Evalúa este post:</h2>
+            <form action="{% url 'blog:add_evaluation' post.pk %}" method="post" class="mt-4">
+                {% csrf_token %}
+                <label for="rating" class="block mb-2">Puntuación:</label>
+                <select name="rating" id="rating" class="mb-2 border rounded bg-white text-black">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <button type="submit" class="px-4 py-2 rounded bg-blue-500 text-white">Enviar puntuación</button>
+            </form>
+        </div>
+
+    </div>
 </body>
 </html>
 {% endblock content %}

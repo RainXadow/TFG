@@ -1,20 +1,112 @@
 {% extends 'base.html' %}
 {% block content %}
-<html class="bg-white dark:bg-slate-800 px-6 py-8 ring-1 ring-slate-900/5 shadow-xl" lang="en">
+<html class="px-6 py-8" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+    <title>Evalumetro</title>
 </head>
 <body class="text-white">
-    <form method="POST">
-        {% csrf_token %}
-        title{{form.title}}
-        <br/>
-        conten{{form.content}}
-        <button type="submit">Enviar</button>
-    </form>
+    <a href="{% url 'blog:home' %}" class="text-white py-10 ">
+        <i class="fas fa-arrow-left text-4xl hover:text-gray-500 transition ease-in-out duration-150"></i>
+    </a>
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-2xl">
+            <form method="POST" enctype="multipart/form-data" class="bg-gray-800 rounded-xl px-12 pt-10 pb-10 mb-4">
+                {% csrf_token %}
+                <h1 class="text-4xl uppercase font-bold tracking-wider text-white-400 mb-6">Crear post</h1>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.title.id_for_label }}">Título<span class="text-red-500">*</span></label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.content.id_for_label }}">Contenido<span class="text-red-500">*</span></label>
+                    {{ form.content }}
+                </div>
+                <input type="hidden" id="{{ form.evaluation.id_for_label }}" name="{{ form.evaluation.html_name }}" value="{{ form.evaluation.value|default:'1' }}">
+
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.evaluation.id_for_label }}">Evaluación (0-5)<span class="text-red-500">*</span></label>
+                    <div class="rating-stars">
+                        <i class="far fa-star text-4xl" data-value="1"></i>
+                        <i class="far fa-star text-4xl" data-value="2"></i>
+                        <i class="far fa-star text-4xl" data-value="3"></i>
+                        <i class="far fa-star text-4xl" data-value="4"></i>
+                        <i class="far fa-star text-4xl" data-value="5"></i>
+                    </div>                                       
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.image.id_for_label }}">Imagen (Si tiene)</label>
+                    {{ form.image }}
+                    <div id="image-preview" class="mt-4">
+                        <!-- La vista previa de la imagen se mostrará aquí -->
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.price.id_for_label }}">Precio (Si tiene)</label>
+                    {{ form.price }}
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.where_to_find.id_for_label }}">Dónde encontrarlo (Si hay)</label>
+                    {{ form.where_to_find }}
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Enviar</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stars = document.querySelectorAll('.rating-stars i');
+            const evaluationInput = document.querySelector('#id_evaluation');
+        
+            stars.forEach(star => {
+                star.addEventListener('mouseover', function () {
+                    highlightStars(star.dataset.value);
+                });
+        
+                star.addEventListener('mouseout', function () {
+                    highlightStars(evaluationInput.value);
+                });
+        
+                star.addEventListener('click', function () {
+                    evaluationInput.value = star.dataset.value;
+                    highlightStars(star.dataset.value);
+                });
+            });
+        
+            function highlightStars(rating) {
+                stars.forEach(star => {
+                    if (star.dataset.value <= rating) {
+                        star.classList.remove('far');
+                        star.classList.add('fas', 'text-yellow-400');
+                    } else {
+                        star.classList.remove('fas', 'text-yellow-400');
+                        star.classList.add('far');
+                    }
+                });
+            }
+        });        
+        </script>
+        <script>
+            // Agrega un evento de escucha al campo de imagen
+            document.querySelector('#{{ form.image.id_for_label }}').addEventListener('change', function (e) {
+                const previewContainer = document.querySelector('#image-preview');
+                previewContainer.innerHTML = ''; // Limpia la vista previa actual
+        
+                // Muestra una vista previa de cada imagen seleccionada
+                Array.from(e.target.files).forEach(file => {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.classList.add('w-full', 'h-auto', 'rounded'); // Ajusta las clases CSS según tus necesidades
+                    img.onload = function () {
+                        URL.revokeObjectURL(this.src);
+                    }
+                    previewContainer.appendChild(img);
+                });
+            });
+        </script>
 </body>
 </html>
 {% endblock content %}

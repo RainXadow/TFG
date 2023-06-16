@@ -13,7 +13,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 DEBUG = os.environ.get('DEBUG')
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 ALLOWED_HOSTS = ['*']
+
+AUTH_USER_MODEL = 'usuario.CustomUser'
+LOGIN_REDIRECT_URL = 'blog:home'
+LOGOUT_REDIRECT_URL = 'blog:home'
+
+# Configuración del correo electrónico
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'jesusarem13@gmail.com'
+EMAIL_HOST_PASSWORD = 'whpsptmwdhqimaqr'
 
 
 # Application definition
@@ -27,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'core',
     'blog',
+    'usuario',
     'tailwind',
     'theme',
 ]
