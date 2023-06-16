@@ -1,9 +1,198 @@
-BLOG LIST
-<br/>
-{%for post in posts%}
-<a href="{% url 'blog:detail' post.id %}">{{post.title}}</a>
-<a href="{% url 'blog:update' post.id %}">Editar</a>
-<a href="{% url 'blog:delete' post.id %}">Eliminar</a> <br/>
-{% endfor %}
-<br/>
-<a href="{% url 'blog:create' %}">Create</a>
+{% extends 'base.html' %}
+{% load static %}
+{% load tailwind_tags %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} Evalumetro Listado {% endblock %}</title>
+    {% tailwind_css %}
+    <style>
+        .show {display: block;}
+    </style>    
+</head>
+<body>
+    {% block content %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        let start = 0;
+        let order = 'newest'; 
+        let filter = 'all';  // Añade esta variable para manejar los filtros
+        let hasMorePosts = true;  // Añade esta variable de estado
+        var resetCalled = false;
+        var llamada = 0;
+
+        $(document).ready(function() {
+            loadPosts();
+        });
+        
+        function toggleDropdown() {
+            document.getElementById("myDropdown").classList.toggle("hidden");
+        }
+        
+        function resetPosts() {
+            start = 0;
+            hasMorePosts = true;
+            $('#post-list').empty();
+        }
+
+        function loadPosts() {
+            console.log('loadPosts called', { start, order, filter, hasMorePosts, resetCalled });
+            // Si no hay más posts para cargar, sal del método temprano
+            if (!hasMorePosts && start > 0) {
+                return;
+            }
+            if (resetCalled) {
+                resetCalled = false;
+                console.log('resetCalled DESPUES:', resetCalled);
+                return;
+            }
+
+            // Muestra el div de carga antes de iniciar la llamada AJAX
+            $("#loading").removeClass("hidden");
+
+            let loadMoreUrl = "{% url 'blog:home' %}" + '?start=' + start + '&order=' + order + '&filter=' + filter;
+            $.ajax({
+                url: loadMoreUrl,
+                type: 'GET',
+                success: function(data) {
+                    let posts = data; // Parsea la respuesta JSON
+                    console.log('posts length:', posts);
+                    if (posts.length === 0) { // Si la API devuelve un array vacío, no hay más posts para cargar
+                        hasMorePosts = false;
+                    } else {
+                        posts.forEach(post => {
+                        let editDeleteButtons = '';
+                        if (post.is_author) {
+                            editDeleteButtons = `
+                                <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded-md" href="/blog/${post.id}/update">Editar</a>
+                                <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded-md" href="/blog/${post.id}/delete">Eliminar</a>
+                            `;
+                        }
+                    
+                        $('#post-list').append(`
+                        <div class="post" style="border: 1px solid #444; padding: 10px; border-radius: 10px; box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5); flex: 0 0 calc(33.3333% - 10px); margin-bottom: 20px; height: 500px; display: flex; flex-direction: column; background: #1E293B;">
+                            <div class="post-image" style="height: 256px; width: 100%; border-radius: 10px; overflow: hidden;">
+                                ${post.image ? `<img src="${post.image}" alt="${post.title}" style="width: 100%; height: 100%; object-fit: cover;">` : 
+                                `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" style="width: 100%; height: auto; max-height: 100%;">
+                                    <path fill="white" d="M160 80H512c8.8 0 16 7.2 16 16V320c0 8.8-7.2 16-16 16H490.8L388.1 178.9c-4.4-6.8-12-10.9-20.1-10.9s-15.7 4.1-20.1 10.9l-52.2 79.8-12.4-16.9c-4.5-6.2-11.7-9.8-19.4-9.8s-14.8 3.6-19.4 9.8L175.6 336H160c-8.8 0-16-7.2-16-16V96c0-8.8 7.2-16 16-16zM96 96V320c0 35.3 28.7 64 64 64H512c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H160c-35.3 0-64 28.7-64 64zM48 120c0-13.3-10.7-24-24-24S0 106.7 0 120V344c0 75.1 60.9 136 136 136H456c13.3 0 24-10.7 24-24s-10.7-24-24-24H136c-48.6 0-88-39.4-88-88V120zm208 24a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"></path>
+                                </svg>`}
+                            </div>
+                            <div class="w-full">
+                                <h2 class="text-3xl font-bold text-white py-2 dark:text-gray-200">
+                                    <a class="dark:text-slate-400 py-6 mt-2 text-4xl" href="${post.detail_url}">
+                                        ${post.title}
+                                    </a>
+                                    <hr style="border-top: 1px solid white; margin: 10px 0;">                                  
+                                </h2>
+                                <p class="text-white dark:text-gray-200 color: #ddd;">${ post.content }</p>
+                                <p class="text-white dark:text-gray-200 py-2">Evaluación: ${ post.evaluation }(${ post.user_participation })</p>
+                                ${editDeleteButtons}
+                            </div>                                
+                        </div>
+                    `);
+                });
+                    start += posts.length;
+                    }
+                // Añade un pequeño retraso antes de ocultar el div de carga
+                setTimeout(() => {
+                    $("#loading").addClass("hidden");
+                }, 500);
+            },
+            
+            error: function(jqXHR, textStatus, errorThrown) {
+                // Oculta el div de carga si la llamada AJAX falla
+                $("#loading").addClass("hidden");
+                console.error("Error al cargar más posts:", textStatus, errorThrown);
+                alert("No se pudieron cargar más posts. Por favor, intenta de nuevo más tarde.");
+            }
+        });
+
+        document.querySelectorAll('#myDropdown a').forEach((a) => {
+            a.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (a.dataset.order) {
+                    order = a.dataset.order;
+                }
+                if (a.dataset.filter) {
+                    filter = a.dataset.filter;
+                }
+
+                resetPosts();
+                loadPosts();
+                if (resetCalled == false)
+                    resetCalled = true;
+                else
+                    resetCalled = false;
+            });
+        }); 
+    }; 
+    
+    let scrollTimeout;
+    $(window).scroll(function() {
+        resetCalled = false;
+        clearTimeout(scrollTimeout);
+    
+        if ($(window).scrollTop() == $(document).height() - $(window).height()) {
+            scrollTimeout = setTimeout(loadPosts, 500);
+        }
+    });
+    </script>
+    <div class="absolute top-2 left-25 mb-6">
+        <img src="/media/post_images/logoEvaluometro.png" alt="Logo" class="h-32 w-auto">
+    </div>    
+    <div class="fixed top-0 right-0 m-4">
+        {% if user.is_authenticated %}
+            <a href="{% url 'usuario:logout' %}" class="bg-gray-700 text-white py-2 px-4 rounded-md inline-flex items-center hover:bg-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-5 w-5 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3h-2a3 3 0 01-3-3V7a3 3 0 013-3h2a3 3 0 013 3v1"></path>
+                </svg>
+                <span>Salir</span>
+            </a>
+        {% else %}
+            <a href="{% url 'usuario:login' %}" class="bg-gray-700 text-white py-2 px-4 rounded-md inline-flex items-center hover:bg-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 9a3 3 0 110-6 3 3 0 010 6zm-7 9a7 7 0 1114 0H3z"/>
+                </svg>
+                <span>Perfil</span>
+            </a>
+        {% endif %}
+    </div> 
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-5xl font-bold text-white dark:text-gray-200 mb-4"></h1>
+        <div>
+            <div class="relative inline-block text-left">
+                <button type="button" onclick="toggleDropdown()" class="inline-flex justify-center w-full rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-gray-700 text-sm font-medium text-gray-100 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500" id="options-menu" aria-haspopup="true" aria-expanded="true">
+                    Filtrar
+                    <svg class="-mr-1 ml-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 12a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                        <path fill-rule="evenodd" d="M10 2a8 8 0 100 16 4 4 0 01 0-8 4 4 0 010 8A8 8 0 0010 2zm1 11a1 1 0 11-2 0 1 1 0 012 0z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            
+                <div id="myDropdown" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-gray-700 ring-1 ring-black ring-opacity-5 hidden">
+                    <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        <a href="#" data-order="most_stars" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Por más estrellas</a>
+                        <a href="#" data-order="newest" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Por más nuevos</a>
+                        <a href="#" data-order="oldest" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Por más antiguos</a>
+                        <a href="#" data-order="most_users" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Por más usuarios</a>
+                        <a href="#" data-filter="my_posts" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Solo mis posts</a>
+                        <a href="#" data-filter="all" class="block px-4 py-2 text-sm text-gray-100 bg-gray-700 hover:bg-gray-800 hover:text-white" role="menuitem">Todos los posts</a>
+                    </div>
+                    
+                </div>
+            </div>              
+            <a class="bg-gray-700 text-white py-2 px-4 rounded-md inline-flex items-center hover:bg-gray-600" href="{% url 'blog:create' %}">Crear</a>
+            </div>            
+    </div>
+    <div id="post-container">
+        <div id="post-list" style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+        </div>
+        <div id="loading" class="py-4 inset-0 flex items-center justify-center text-2xl font-bold text-white" style="background-color: rgba(0, 0, 0, 0.7);">
+            Cargando...
+        </div>        
+    </div>  
+    {% endblock content %}
+</body>
+</html>

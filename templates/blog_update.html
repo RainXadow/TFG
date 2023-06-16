@@ -1,7 +1,202 @@
-<form method="POST">
-    {% csrf_token %}
-    title{{form.title}}
-    <br/>
-    conten{{form.content}}
-    <button type="submit">Actualizar</button>
-</form>
+{% extends 'base.html' %}
+{% block content %}
+<html class="px-6 py-8" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css">
+    <title>Evalumetro</title>
+</head>
+<body class="text-white">
+    <a href="{% url 'blog:home' %}" class="text-white py-10 ">
+        <i class="fas fa-arrow-left text-4xl hover:text-gray-500 transition ease-in-out duration-150"></i>
+    </a>
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-2xl">
+            <form method="POST" enctype="multipart/form-data" class="bg-gray-800 rounded-xl px-12 pt-10 pb-10 mb-4">
+                {% csrf_token %}
+                <h1 class="text-4xl uppercase font-bold tracking-wider text-white-400 mb-6">Actualizar post</h1>
+                {% if form_errors %}
+                    <div class="bg-red-500 text-white p-4 rounded mb-4">
+                        <h2 class="font-bold mb-2">Errores del formulario:</h2>
+                        {{ form_errors }}
+                    </div>
+                {% endif %}
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.title.id_for_label }}">Título</label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.content.id_for_label }}">Contenido</label>
+                    {{ form.content }}
+                </div>
+                <input type="hidden" id="{{ form.evaluation.id_for_label }}" name="{{ form.evaluation.html_name }}" value="{{ form.evaluation.value|default:'1' }}">
+                <input type="hidden" name="delete_image" id="delete-image-flag" value="">
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.evaluation.id_for_label }}">Evaluación (0-5)<span class="text-red-500">*</span></label>
+                    <div class="rating-stars">
+                        <i class="far fa-star text-4xl" data-value="1"></i>
+                        <i class="far fa-star text-4xl" data-value="2"></i>
+                        <i class="far fa-star text-4xl" data-value="3"></i>
+                        <i class="far fa-star text-4xl" data-value="4"></i>
+                        <i class="far fa-star text-4xl" data-value="5"></i>
+                    </div>                                       
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.image.id_for_label }}">Imagen (Si tiene)</label>
+                    <div id="image-preview" class="mt-4 relative w-205 h-205">
+                        <!-- La vista previa de la imagen se mostrará aquí -->
+                        {% if object.image %}
+                            <img id="image-preview-img" src="{{ object.image.url }}" class="w-full h-full object-cover rounded" alt="Imagen actual">
+                            <button id="delete-image" class="absolute top-0 right-0 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold hover:bg-red-700">&times;</button>
+                        {% else %}
+                            <p id="no-image-text" class="text-gray-400">No hay imagen disponible</p>
+                        {% endif %}
+                    </div>
+                    <div class="relative">
+                        {% with form.image as image_input %}
+                            <input type="{{ image_input.field.widget.input_type }}" name="{{ image_input.html_name }}" id="{{ image_input.auto_id }}" class="{{ image_input.auto_id }}">
+                        {% endwith %}
+                    </div>                    
+                </div>                
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.price.id_for_label }}">Precio (Si tiene)</label>
+                    {{ form.price }}
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white text-sm font-bold mb-2" for="{{ form.where_to_find.id_for_label }}">Dónde encontrarlo (Si hay)</label>
+                    {{ form.where_to_find }}
+                </div>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Actualizar</button>
+                <button type="button" id="delete-post" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Eliminar post</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        const fileInput = document.querySelector('#{{ form.image.id_for_label }}');
+        let img = document.querySelector('#image-preview-img');
+        const noImageText = document.querySelector('#no-image-text');
+        let deleteButton = document.querySelector('#delete-image');
+    
+        if (deleteButton) {
+            deleteButton.addEventListener('click', function (event) {
+                document.querySelector('#delete-image-flag').value = 'true';
+                event.preventDefault();
+                if (img) {
+                    img.src = '';
+                    img.style.display = 'none';
+                }
+                deleteButton.style.display = 'none';
+                noImageText.style.display = 'block';
+                document.querySelector('#{{ form.image.id_for_label }}').value = '';
+            });
+        }
+    
+        if (fileInput) {
+            fileInput.addEventListener('change', function () {
+                if (fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (!img) {
+                            img = document.createElement('img');
+                            img.id = 'image-preview-img';
+                            img.classList.add('w-full', 'h-full', 'object-cover', 'rounded');
+                            document.querySelector('#image-preview').appendChild(img);
+                        }
+                        img.src = e.target.result;
+                        img.style.display = 'block';
+                        if (!deleteButton) {
+                            deleteButton = document.createElement('button');
+                            deleteButton.id = 'delete-image';
+                            deleteButton.classList.add('absolute', 'top-0', 'right-0', 'bg-red-500', 'text-white', 'w-8', 'h-8', 'rounded-full', 'flex', 'items-center', 'justify-center', 'font-bold', 'hover:bg-red-700');
+                            deleteButton.innerHTML = '&times;';
+                            deleteButton.addEventListener('click', function (event) {
+                                document.querySelector('#delete-image-flag').value = 'true';
+                                event.preventDefault();
+                                if (img) {
+                                    img.src = '';
+                                    img.style.display = 'none';
+                                }
+                                deleteButton.style.display = 'none';
+                                noImageText.style.display = 'block';
+                                document.querySelector('#{{ form.image.id_for_label }}').value = '';
+                            });
+                            document.querySelector('#image-preview').appendChild(deleteButton);
+                        }
+                        deleteButton.style.display = 'block';
+                        noImageText.style.display = 'none';
+                    }
+                    reader.readAsDataURL(fileInput.files[0]);
+                    document.querySelector('#delete-image-flag').value = '';
+                } else {
+                    if (img) {
+                        img.style.display = 'none';
+                        deleteButton.style.display = 'none';
+                    }
+                    noImageText.style.display = 'block';
+                }
+            });
+        }
+    </script>    
+    <script>
+        // Código JavaScript para eliminar el post
+        document.querySelector('#delete-post').addEventListener('click', function () {
+            if (confirm('¿Estás seguro de que quieres eliminar este post?')) {
+                fetch('{% url "blog:delete" object.pk %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '{% url "blog:home" %}';
+                    } else {
+                        alert('Error al eliminar el post. Por favor, inténtalo de nuevo.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stars = document.querySelectorAll('.rating-stars i');
+            const evaluationInput = document.querySelector('#id_evaluation');
+        
+            stars.forEach(star => {
+                star.addEventListener('mouseover', function () {
+                    highlightStars(star.dataset.value);
+                });
+        
+                star.addEventListener('mouseout', function () {
+                    highlightStars(evaluationInput.value);
+                });
+        
+                star.addEventListener('click', function () {
+                    evaluationInput.value = star.dataset.value;
+                    highlightStars(star.dataset.value);
+                });
+            });
+
+            function highlightStars(rating) {
+                stars.forEach(star => {
+                    if (star.dataset.value <= rating) {
+                        star.classList.remove('far');
+                        star.classList.add('fas', 'text-yellow-400');
+                    } else {
+                        star.classList.remove('fas', 'text-yellow-400');
+                        star.classList.add('far');
+                    }
+                });
+            }
+        });        
+    </script>
+</body>
+</html>
+{% endblock content %}
+
+

@@ -1,15 +1,29 @@
-{% load static tailwind_tags %}
+{% load tailwind_tags %}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <title>{% block title %}Evaluometro{% endblock title %}</title>
     {% tailwind_css %}
-
-    <title>Document</title>
-</head> 
-<body>
-    {% block content %}{% endblock content %}
+</head>
+<body class="bg-dark dark:bg-slate-900 px-6 py-8 text-white min-h-screen">
+    <div class="container mx-auto py-4">
+        <div class="relative flex justify-center">
+            <form action="{% url 'blog:home' %}" method="get">
+                <div class="relative">
+                    <input name="q" type="search" class="w-64 py-2 pl-10 pr-4 bg-gray-700 text-white rounded-full focus:outline-none focus:bg-gray-600" placeholder="Buscar">
+                    <button type="submit" style="display:none;"></button>
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l5.387 5.387a1 1 0 11-1.414 1.414l-5.387-5.387A6 6 0 012 8z" clip-rule="evenodd"/>
+                        </svg>
+                    </span>
+                </div>
+            </form>
+        </div>        
+        {% block content %}{% endblock content %}
+    </div>
 </body>
 </html>
